@@ -11,6 +11,8 @@ type Config struct {
 
 	Keys Keys
 
+	Grpc Grpc
+
 	Cache struct {
 		Ttl int64 `mapstructure:"ttl"`
 	} `mapstructure:"cache"`
@@ -39,6 +41,11 @@ type Keys struct {
 	SigningKey string
 }
 
+type Grpc struct {
+	Host string
+	Port int
+}
+
 func New(dirname, filename string) (*Config, error) {
 	cfg := new(Config)
 
@@ -58,6 +65,10 @@ func New(dirname, filename string) (*Config, error) {
 	}
 
 	if err := envconfig.Process("key", &cfg.Keys); err != nil {
+		return nil, err
+	}
+
+	if err := envconfig.Process("grpc", &cfg.Grpc); err != nil {
 		return nil, err
 	}
 

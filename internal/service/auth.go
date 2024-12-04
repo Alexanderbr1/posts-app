@@ -5,7 +5,9 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
+	logs "github.com/Alexanderbr1/posts-log/pkg/domain"
 	"github.com/dgrijalva/jwt-go"
+	"log"
 	"math/rand"
 	"posts-app/internal/config"
 	"posts-app/internal/domain"
@@ -19,23 +21,47 @@ type tokenClaims struct {
 }
 
 type AuthService struct {
-	cfg  *config.Config
-	repo repository.Authorization
+	cfg        *config.Config
+	repo       repository.Authorization
+	logsClient LogsClient
 }
 
-func NewAuthService(cfg *config.Config, repo repository.Authorization) *AuthService {
-	return &AuthService{cfg, repo}
+func NewAuthService(cfg *config.Config, repo repository.Authorization, LogsClient LogsClient) *AuthService {
+	return &AuthService{cfg, repo, LogsClient}
 }
 
 func (s *AuthService) CreateUser(ctx context.Context, user domain.User) (int, error) {
 	user.Password = generatePasswordHash(s.cfg, user.Password)
-	return s.repo.CreateUser(ctx, user)
+	id, err := s.repo.CreateUser(ctx, user)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := s.logsClient.LogRequest(ctx, logs.LogItem{
+		Entity:    logs.ENTITY_USER,
+		Action:    logs.ACTION_REGISTER,
+		EntityID:  int64(id),
+		Timestamp: time.Now(),
+	}); err != nil {
+		log.Print(err)
+	}
+
+	return id, nil
 }
 
 func (s *AuthService) SignIn(ctx context.Context, input domain.SignInInput) (string, string, error) {
 	userID, err := s.repo.GetUserID(ctx, input.Username, generatePasswordHash(s.cfg, input.Password))
 	if err != nil {
 		return "", "", err
+	}
+
+	if err := s.logsClient.LogRequest(ctx, logs.LogItem{
+		Entity:    logs.ENTITY_USER,
+		Action:    logs.ACTION_LOGIN,
+		EntityID:  int64(userID),
+		Timestamp: time.Now(),
+	}); err != nil {
+		log.Print(err)
 	}
 
 	return s.GenerateTokens(ctx, userID)

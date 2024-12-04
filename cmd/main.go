@@ -12,6 +12,7 @@ import (
 	"posts-app/internal/repository"
 	"posts-app/internal/server"
 	"posts-app/internal/service"
+	grpc_client "posts-app/internal/transport/grpc"
 	"posts-app/internal/transport/rest"
 	"posts-app/pkg/cache"
 	"posts-app/pkg/database"
@@ -44,8 +45,13 @@ func main() {
 
 	c := cache.New()
 
+	logsClient, err := grpc_client.NewClient(cfg.Grpc.Host, cfg.Grpc.Port)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	postsRepo := repository.NewRepository(db)
-	postsService := service.NewService(cfg, c, postsRepo)
+	postsService := service.NewService(cfg, c, postsRepo, logsClient)
 	handler := rest.NewHandler(postsService)
 
 	srv := server.New(cfg, handler.InitRoutes())

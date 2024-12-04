@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.5'
 
 services:
   posts-app:
@@ -17,6 +17,10 @@ services:
       - DB_PASSWORD=qwerty
       - KEY_SALT=sdlkfgjhlkjh34lser34523cfrv
       - KEY_SIGNINGKEY=dklfgjh34lkrnmlvmwe
+      - GRPC_HOST=postslog
+      - GRPC_PORT=9000
+    networks:
+      - app
 
   db:
     restart: always
@@ -27,3 +31,10 @@ services:
       - POSTGRES_PASSWORD=qwerty
     ports:
       - "5432:5432"
+    networks:
+      - app
+
+networks:
+  app:
+    external: true
+    name: post_network

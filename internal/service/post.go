@@ -11,13 +11,14 @@ import (
 )
 
 type PostService struct {
-	cfg   *config.Config
-	cache *cache.MemoryCache
-	repo  repository.Post
+	cfg        *config.Config
+	cache      *cache.MemoryCache
+	repo       repository.Post
+	logsClient LogsClient
 }
 
-func NewPostService(cfg *config.Config, cache *cache.MemoryCache, repo repository.Post) *PostService {
-	return &PostService{cfg, cache, repo}
+func NewPostService(cfg *config.Config, cache *cache.MemoryCache, repo repository.Post, logsClient LogsClient) *PostService {
+	return &PostService{cfg, cache, repo, logsClient}
 }
 
 func (s *PostService) Create(ctx context.Context, userId int, post domain.Post) (int, error) {

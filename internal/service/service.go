@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	logs "github.com/Alexanderbr1/posts-log/pkg/domain"
 	"posts-app/internal/config"
 	"posts-app/internal/domain"
 	"posts-app/internal/repository"
@@ -32,14 +33,18 @@ type Post interface {
 	Delete(ctx context.Context, userId, id int) error
 }
 
+type LogsClient interface {
+	LogRequest(ctx context.Context, req logs.LogItem) error
+}
+
 type Service struct {
 	Authorization
 	Post
 }
 
-func NewService(cfg *config.Config, cache *cache.MemoryCache, repos *repository.Repository) *Service {
+func NewService(cfg *config.Config, cache *cache.MemoryCache, repos *repository.Repository, logsClient LogsClient) *Service {
 	return &Service{
-		Authorization: NewAuthService(cfg, repos.Authorization),
-		Post:          NewPostService(cfg, cache, repos.Post),
+		Authorization: NewAuthService(cfg, repos.Authorization, logsClient),
+		Post:          NewPostService(cfg, cache, repos.Post, logsClient),
 	}
 }
